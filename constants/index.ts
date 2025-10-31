@@ -155,6 +155,49 @@ End the conversation on a polite and positive note.
   },
 };
 
+export const interviewGenerator: CreateAssistantDTO = {
+  name: "Interview Generator",
+  firstMessage:
+    "Hello! I'm here to help you generate customized interview questions. Let's discuss what type of interview you'd like to prepare for.",
+  transcriber: {
+    provider: "deepgram",
+    model: "nova-2",
+    language: "en",
+  },
+  voice: {
+    provider: "11labs",
+    voiceId: "sarah",
+    stability: 0.4,
+    similarityBoost: 0.8,
+    speed: 0.9,
+    style: 0.5,
+    useSpeakerBoost: true,
+  },
+  model: {
+    provider: "openai",
+    model: "gpt-4",
+    messages: [
+      {
+        role: "system",
+        content: `You are an AI interview question generator. Your role is to help users create customized interview questions based on their preferences.
+
+Guidelines:
+- Ask about their target role, experience level, and preferred technologies
+- Generate relevant, challenging questions based on their responses
+- Provide a mix of technical and behavioral questions
+- Keep the conversation engaging and helpful
+- Be professional yet friendly
+- Ask follow-up questions to better understand their needs
+- Provide 5-10 quality questions based on their requirements
+
+Start by asking what type of role they're preparing for and their experience level.
+
+Keep responses conversational and concise since this is a voice interaction.`,
+      },
+    ],
+  },
+};
+
 export const feedbackSchema = z.object({
   totalScore: z.number(),
   categoryScores: z.tuple([

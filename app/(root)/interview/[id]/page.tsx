@@ -21,7 +21,7 @@ const InterviewDetails = async ({ params }: RouteParams) => {
 
   const feedback = await getFeedbackByInterviewId({
     interviewId: id,
-    userId: user?.id!,
+    userId: user?.id || "",
   });
 
   return (
@@ -39,7 +39,7 @@ const InterviewDetails = async ({ params }: RouteParams) => {
             <h3 className="capitalize">{interview.role} Interview</h3>
           </div>
 
-          <DisplayTechIcons techStack={interview.techstack} />
+          <DisplayTechIcons techStack={interview.techstack || []} />
         </div>
 
         <p className="bg-dark-200 px-4 py-2 rounded-lg h-fit">
@@ -48,11 +48,11 @@ const InterviewDetails = async ({ params }: RouteParams) => {
       </div>
 
       <Agent
-        userName={user?.name!}
+        userName={user?.name || ""}
         userId={user?.id}
         interviewId={id}
         type="interview"
-        questions={interview.questions}
+        questions={Array.isArray(interview.questions) && typeof interview.questions[0] === 'string' ? interview.questions as string[] : []}
         feedbackId={feedback?.id}
       />
     </>

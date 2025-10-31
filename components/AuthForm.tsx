@@ -24,7 +24,12 @@ const authFormSchema = (type: FormType) => {
   return z.object({
     name: type === "sign-up" ? z.string().min(3) : z.string().optional(),
     email: z.string().email(),
-    password: z.string().min(3),
+    password: z.string().min(6),
+    contactNumber: type === "sign-up" ? z.string().min(10).max(15) : z.string().optional(),
+    collegeName: type === "sign-up" ? z.string().min(2) : z.string().optional(),
+    degree: type === "sign-up" ? z.string().min(2) : z.string().optional(),
+    branch: type === "sign-up" ? z.string().min(2) : z.string().optional(),
+    yearOfStudy: type === "sign-up" ? z.string().min(1) : z.string().optional(),
   });
 };
 
@@ -38,13 +43,18 @@ const AuthForm = ({ type }: { type: FormType }) => {
       name: "",
       email: "",
       password: "",
+      contactNumber: "",
+      collegeName: "",
+      degree: "",
+      branch: "",
+      yearOfStudy: "",
     },
   });
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
       if (type === "sign-up") {
-        const { name, email, password } = data;
+        const { name, email, password, contactNumber, collegeName, degree, branch, yearOfStudy } = data;
 
         const userCredential = await createUserWithEmailAndPassword(
           auth,
@@ -57,6 +67,11 @@ const AuthForm = ({ type }: { type: FormType }) => {
           name: name!,
           email,
           password,
+          contactNumber: contactNumber!,
+          collegeName: collegeName!,
+          degree: degree!,
+          branch: branch!,
+          yearOfStudy: yearOfStudy!,
         });
 
         if (!result.success) {
@@ -64,8 +79,8 @@ const AuthForm = ({ type }: { type: FormType }) => {
           return;
         }
 
-        toast.success("Account created successfully. Please sign in.");
-        router.push("/sign-in");
+        toast.success("Account created successfully! Please upload your CV.");
+        router.push("/profile/cv-upload");
       } else {
         const { email, password } = data;
 
@@ -113,13 +128,57 @@ const AuthForm = ({ type }: { type: FormType }) => {
             className="w-full space-y-6 mt-4 form"
           >
             {!isSignIn && (
-              <FormField
-                control={form.control}
-                name="name"
-                label="Name"
-                placeholder="Your Name"
-                type="text"
-              />
+              <>
+                <FormField
+                  control={form.control}
+                  name="name"
+                  label="Full Name"
+                  placeholder="Your Full Name"
+                  type="text"
+                />
+
+                <FormField
+                  control={form.control}
+                  name="contactNumber"
+                  label="Contact Number"
+                  placeholder="Your Phone Number"
+                  type="tel"
+                />
+
+                <FormField
+                  control={form.control}
+                  name="collegeName"
+                  label="College Name"
+                  placeholder="Your College/University"
+                  type="text"
+                />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="degree"
+                    label="Degree"
+                    placeholder="B.Tech, M.Tech, etc."
+                    type="text"
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="branch"
+                    label="Branch"
+                    placeholder="CSE, ECE, etc."
+                    type="text"
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="yearOfStudy"
+                  label="Year of Study"
+                  placeholder="1st, 2nd, 3rd, 4th Year"
+                  type="text"
+                />
+              </>
             )}
 
             <FormField
@@ -134,7 +193,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
               control={form.control}
               name="password"
               label="Password"
-              placeholder="Enter your password"
+              placeholder="Enter your password (min 6 characters)"
               type="password"
             />
 

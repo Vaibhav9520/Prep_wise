@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 import { vapi } from "@/lib/vapi.sdk";
-import { interviewer } from "@/constants";
+import { simpleInterviewer, simpleGenerator } from "@/constants/simple-vapi";
 import { createFeedback } from "@/lib/actions/general.action";
 
 enum CallStatus {
@@ -27,7 +27,7 @@ const Agent = ({
   interviewId,
   feedbackId,
   type,
-  questions,
+  questions, // eslint-disable-line @typescript-eslint/no-unused-vars
 }: AgentProps) => {
   const router = useRouter();
   const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE);
@@ -37,14 +37,17 @@ const Agent = ({
 
   useEffect(() => {
     const onCallStart = () => {
+      console.log("✅ Call started successfully");
       setCallStatus(CallStatus.ACTIVE);
     };
 
     const onCallEnd = () => {
+      console.log("📞 Call ended");
       setCallStatus(CallStatus.FINISHED);
     };
 
     const onMessage = (message: Message) => {
+      console.log("💬 Message received:", message);
       if (message.type === "transcript" && message.transcriptType === "final") {
         const newMessage = { role: message.role, content: message.transcript };
         setMessages((prev) => [...prev, newMessage]);
@@ -52,17 +55,32 @@ const Agent = ({
     };
 
     const onSpeechStart = () => {
-      console.log("speech start");
+      console.log("🎤 Speech started");
       setIsSpeaking(true);
     };
 
     const onSpeechEnd = () => {
-      console.log("speech end");
+      console.log("🔇 Speech ended");
       setIsSpeaking(false);
     };
 
-    const onError = (error: Error) => {
-      console.log("Error:", error);
+    const onError = (error: unknown) => {
+      console.error("❌ VAPI Error:", error);
+      
+      // Handle specific error types
+      if (error && typeof error === 'object' && 'error' in error) {
+        const errorObj = error as { error?: { type?: string }; errorMsg?: string };
+        if (errorObj.error?.type === 'ejected' || errorObj.errorMsg?.includes('Meeting has ended')) {
+          console.log("⚠️ Call was ejected or ended unexpectedly - this might be a configuration issue");
+          setCallStatus(CallStatus.FINISHED);
+        } else {
+          console.log("🔄 Resetting to inactive due to error");
+          setCallStatus(CallStatus.INACTIVE);
+        }
+      } else {
+        console.log("🔄 Resetting to inactive due to unknown error");
+        setCallStatus(CallStatus.INACTIVE);
+      }
     };
 
     vapi.on("call-start", onCallStart);
@@ -116,27 +134,37 @@ const Agent = ({
 
   const handleCall = async () => {
     setCallStatus(CallStatus.CONNECTING);
+    console.log("Starting VAPI call...", { type, userName, userId });
 
-    if (type === "generate") {
-      await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, {
-        variableValues: {
-          username: userName,
-          userid: userId,
-        },
-      });
-    } else {
-      let formattedQuestions = "";
-      if (questions) {
-        formattedQuestions = questions
-          .map((question) => `- ${question}`)
-          .join("\n");
+    try {
+      if (type === "generate") {
+        console.log("🚀 Starting simple generator...");
+        const result = await vapi.start(simpleGenerator);
+        console.log("✅ Generator result:", result);
+      } else {
+        console.log("🚀 Starting simple interviewer...");
+        const result = await vapi.start(simpleInterviewer);
+        console.log("✅ Interviewer result:", result);
       }
-
-      await vapi.start(interviewer, {
-        variableValues: {
-          questions: formattedQuestions,
-        },
-      });
+    } catch (error) {
+      console.error("Failed to start VAPI call:", error);
+      setCallStatus(CallStatus.INACTIVE);
+      
+      // More specific error messages
+      let errorMessage = "Failed to start the interview. ";
+      if (error instanceof Error) {
+        if (error.message.includes('assistant')) {
+          errorMessage += "Assistant configuration issue.";
+        } else if (error.message.includes('token')) {
+          errorMessage += "Authentication issue. Check your VAPI token.";
+        } else {
+          errorMessage += error.message;
+        }
+      } else {
+        errorMessage += "Please try again.";
+      }
+      
+      alert(errorMessage);
     }
   };
 

@@ -26,7 +26,7 @@ export async function setSessionCookie(idToken: string) {
 }
 
 export async function signUp(params: SignUpParams) {
-  const { uid, name, email } = params;
+  const { uid, name, email, contactNumber, collegeName, degree, branch, yearOfStudy } = params;
 
   try {
     // check if user exists in db
@@ -37,23 +37,31 @@ export async function signUp(params: SignUpParams) {
         message: "User already exists. Please sign in.",
       };
 
-    // save user to db
+    // save user to db with additional fields
     await db.collection("users").doc(uid).set({
       name,
       email,
-      // profileURL,
-      // resumeURL,
+      contactNumber: contactNumber || "",
+      collegeName: collegeName || "",
+      degree: degree || "",
+      branch: branch || "",
+      yearOfStudy: yearOfStudy || "",
+      skills: [],
+      totalInterviews: 0,
+      averageScore: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     });
 
     return {
       success: true,
-      message: "Account created successfully. Please sign in.",
+      message: "Account created successfully. Please upload your CV.",
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error creating user:", error);
 
     // Handle Firebase specific errors
-    if (error.code === "auth/email-already-exists") {
+    if (error && typeof error === 'object' && 'code' in error && error.code === "auth/email-already-exists") {
       return {
         success: false,
         message: "This email is already in use",
@@ -79,8 +87,8 @@ export async function signIn(params: SignInParams) {
       };
 
     await setSessionCookie(idToken);
-  } catch (error: any) {
-    console.log("");
+  } catch (error: unknown) {
+    console.error("Sign in error:", error);
 
     return {
       success: false,

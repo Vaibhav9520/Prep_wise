@@ -14,12 +14,12 @@ async function Home() {
   const user = await getCurrentUser();
 
   const [userInterviews, allInterview] = await Promise.all([
-    getInterviewsByUserId(user?.id!),
-    getLatestInterviews({ userId: user?.id! }),
+    getInterviewsByUserId(user?.id || ""),
+    getLatestInterviews({ userId: user?.id || "" }),
   ]);
 
-  const hasPastInterviews = userInterviews?.length! > 0;
-  const hasUpcomingInterviews = allInterview?.length! > 0;
+  const hasPastInterviews = (userInterviews?.length || 0) > 0;
+  const hasUpcomingInterviews = (allInterview?.length || 0) > 0;
 
   return (
     <>
@@ -30,9 +30,38 @@ async function Home() {
             Practice real interview questions & get instant feedback
           </p>
 
-          <Button asChild className="btn-primary max-sm:w-full">
-            <Link href="/interview">Start an Interview</Link>
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Button asChild className="btn-primary">
+              <Link href="/interview/personalized">AI Personalized Interview</Link>
+            </Button>
+            <Button asChild className="btn-secondary">
+              <Link href="/interview">Quick Practice</Link>
+            </Button>
+          </div>
+
+          {/* User Stats */}
+          {user && (
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mt-4">
+              <h3 className="font-semibold mb-2">Your Progress</h3>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-300">Total Interviews:</span>
+                  <span className="font-bold ml-2">{(user as UserProfile).totalInterviews || 0}</span>
+                </div>
+                <div>
+                  <span className="text-gray-300">Average Score:</span>
+                  <span className="font-bold ml-2">{(user as UserProfile).averageScore || 0}%</span>
+                </div>
+              </div>
+              {!user.cvURL && (
+                <div className="mt-3">
+                  <Button asChild size="sm" variant="outline">
+                    <Link href="/profile/cv-upload">📄 Upload CV for Personalized Questions</Link>
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <Image
@@ -54,9 +83,9 @@ async function Home() {
                 key={interview.id}
                 userId={user?.id}
                 interviewId={interview.id}
-                role={interview.role}
-                type={interview.type}
-                techstack={interview.techstack}
+                role={interview.role || ""}
+                type={interview.type || ""}
+                techstack={interview.techstack || []}
                 createdAt={interview.createdAt}
               />
             ))
@@ -76,9 +105,9 @@ async function Home() {
                 key={interview.id}
                 userId={user?.id}
                 interviewId={interview.id}
-                role={interview.role}
-                type={interview.type}
-                techstack={interview.techstack}
+                role={interview.role || ""}
+                type={interview.type || ""}
+                techstack={interview.techstack || []}
                 createdAt={interview.createdAt}
               />
             ))
