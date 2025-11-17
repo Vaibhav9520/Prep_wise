@@ -66,7 +66,7 @@ const Agent = ({
 
     const onError = (error: unknown) => {
       console.error("❌ VAPI Error:", error);
-      
+
       // Handle specific error types
       if (error && typeof error === 'object' && 'error' in error) {
         const errorObj = error as { error?: { type?: string }; errorMsg?: string };
@@ -133,37 +133,48 @@ const Agent = ({
   }, [messages, callStatus, feedbackId, interviewId, router, type, userId]);
 
   const handleCall = async () => {
-    setCallStatus(CallStatus.CONNECTING);
-    console.log("Starting VAPI call...", { type, userName, userId });
-
     try {
-      if (type === "generate") {
-        console.log("🚀 Starting simple generator...");
-        const result = await vapi.start(simpleGenerator);
-        console.log("✅ Generator result:", result);
-      } else {
-        console.log("🚀 Starting simple interviewer...");
-        const result = await vapi.start(simpleInterviewer);
-        console.log("✅ Interviewer result:", result);
+      setCallStatus(CallStatus.CONNECTING);
+      console.log("Starting VAPI connection...", { type, userName, userId });
+
+      // Check if VAPI token is available
+      const token = process.env.NEXT_PUBLIC_VAPI_WEB_TOKEN;
+      if (!token) {
+        throw new Error("VAPI token is not configured. Please check your environment variables.");
       }
+
+      // Select the appropriate assistant configuration
+      const assistantConfig = type === "generate" ? simpleGenerator : simpleInterviewer;
+      console.log("Using assistant config:", assistantConfig.name);
+
+      // Start the VAPI call
+      const result = await vapi.start(assistantConfig);
+      console.log("VAPI connection established:", result);
+
+      // The call-start event will set status to ACTIVE
     } catch (error) {
-      console.error("Failed to start VAPI call:", error);
+      console.error("Failed to start VAPI connection:", error);
       setCallStatus(CallStatus.INACTIVE);
-      
+
       // More specific error messages
-      let errorMessage = "Failed to start the interview. ";
+      let errorMessage = "Failed to connect to the interview system.\n\n";
       if (error instanceof Error) {
-        if (error.message.includes('assistant')) {
-          errorMessage += "Assistant configuration issue.";
-        } else if (error.message.includes('token')) {
-          errorMessage += "Authentication issue. Check your VAPI token.";
-        } else {
+        if (error.message.includes('token') || error.message.includes('VAPI token')) {
+          errorMessage += "Issue: VAPI token is missing or invalid.\n";
+          errorMessage += "Please check your environment configuration.";
+        } else if (error.message.includes('assistant')) {
+          errorMessage += "Issue: Assistant configuration error.\n";
           errorMessage += error.message;
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+          errorMessage += "Issue: Network connection problem.\n";
+          errorMessage += "Please check your internet connection.";
+        } else {
+          errorMessage += "Error: " + error.message;
         }
       } else {
-        errorMessage += "Please try again.";
+        errorMessage += "An unknown error occurred. Please try again.";
       }
-      
+
       alert(errorMessage);
     }
   };
@@ -224,23 +235,27 @@ const Agent = ({
 
       <div className="w-full flex justify-center">
         {callStatus !== "ACTIVE" ? (
-          <button className="relative btn-call" onClick={() => handleCall()}>
+          <button
+            className="relative btn-call"
+            onClick={() => handleCall()}
+            disabled={callStatus === "CONNECTING"}
+          >
             <span
               className={cn(
-                "absolute animate-ping rounded-full opacity-75",
+                "absolute inset-0 animate-ping rounded-full bg-fresh-green opacity-75",
                 callStatus !== "CONNECTING" && "hidden"
               )}
             />
 
             <span className="relative">
               {callStatus === "INACTIVE" || callStatus === "FINISHED"
-                ? "Call"
-                : ". . ."}
+                ? "Connect"
+                : "Connecting..."}
             </span>
           </button>
         ) : (
           <button className="btn-disconnect" onClick={() => handleDisconnect()}>
-            End
+            Disconnect
           </button>
         )}
       </div>

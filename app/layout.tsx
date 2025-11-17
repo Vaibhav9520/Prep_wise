@@ -10,8 +10,8 @@ const monaSans = Mona_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "PrepWise",
-  description: "An AI-powered platform for preparing for mock interviews",
+  title: "PlaceMate AI - AI-Powered Interview Preparation",
+  description: "Ace your next interview with AI-powered mock interviews, instant feedback, and personalized questions. Join thousands of successful candidates who landed their dream jobs.",
 };
 
 export default function RootLayout({
@@ -20,8 +20,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${monaSans.className} antialiased pattern`}>
+    <html lang="en">
+      <body className={`${monaSans.className} antialiased`}>
         {children}
 
         <Toaster />

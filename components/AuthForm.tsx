@@ -2,7 +2,6 @@
 
 import { z } from "zod";
 import Link from "next/link";
-import Image from "next/image";
 import { toast } from "sonner";
 import { auth } from "@/firebase/client";
 import { useForm } from "react-hook-form";
@@ -116,11 +115,13 @@ const AuthForm = ({ type }: { type: FormType }) => {
     <div className="card-border lg:min-w-[566px]">
       <div className="flex flex-col gap-6 card py-14 px-10">
         <div className="flex flex-row gap-2 justify-center">
-          <Image src="/logo.svg" alt="logo" height={32} width={38} />
-          <h2 className="text-primary-100">PrepWise</h2>
+          <div className="w-12 h-12 bg-gradient-fresh rounded-xl flex items-center justify-center">
+            <span className="text-white font-bold text-2xl">P</span>
+          </div>
+          <h2 className="text-2xl font-bold text-gradient">PlaceMate AI</h2>
         </div>
 
-        <h3>Practice job interviews with AI</h3>
+        <h3>Master Your Interviews with AI</h3>
 
         <Form {...form}>
           <form
